@@ -55,7 +55,7 @@ router.route('/add').post(function(req, res) {
 router.route('/update/:id').post(function(req, res) {
   Todo.findById(req.params.id, function(err, todo) {
       if (!todo)
-          res.status(404).send("data is not found");
+          res.status(404).send("Data not found");
       else
           todo.title = req.body.title;
           todo.user = req.body.user;
@@ -71,19 +71,19 @@ router.route('/update/:id').post(function(req, res) {
   });
 });
 
-// router.route('/delete/:id').post(function(req, res) {
-//   Todo.findById(req.params.id, function(err, todo) {
-//       if (!todo)
-//           res.status(404).send("data is not found");
-//       else
-//           todo.deleteOne().then(todo => {
-//               res.json('Todo updated!');
-//           })
-//           .catch(err => {
-//               res.status(400).send("Update not possible");
-//           });
-//   });
-// });
+router.route('/delete/:id').post(function(req, res) {
+    Todo.findById(req.params.id, function(err, todo) {
+        if (!todo)
+            res.status(404).send("Data not found");
+        else
+            Todo.deleteOne({"_id":req.params.id}).then(todo => {
+                res.json('Todo deleted!');
+            })
+            .catch(err => {
+                res.status(400).send("Data deletion failed");
+            });
+    });
+});
 
 app.listen(PORT, () => {
   console.log('Server is running on: ', PORT);
