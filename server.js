@@ -1,25 +1,45 @@
 const express = require ('express');
 const app = express();
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const PORT = 8080;
-const mongoose = require('mongoose');
-let Todo = require('./db/todo.model');
 
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const passport = require('passport');
+
+const cors = require('cors');
 app.use(cors());
+
+const users = require('./routes/api/users');
+let Todo = require('./models/Todo');
+
+app.use(
+    bodyParser.urlencoded({
+        extended: false
+    })
+);
 app.use(bodyParser.json());
 
-mongoose.connect('mongodb+srv://@cluster0-zzb4d.mongodb.net/spheretowndb?retryWrites=true&w=majority',{
-    user: 'admin',
-    pass: 'crazy4541',
+// DB config
+const db = require('./config/keys').mongoURI;
+
+// Connect to DB
+mongoose.connect(db,{
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true
-});
-const connection = mongoose.connection;
-connection.once('open', () => {
-    console.log("MongoDB database connection established successfully");
 })
+.then(() => { console.log('MongoDB connected successfully'); })
+.catch((err) => { console.log('Error connecting to DB:', err); });
+
+const port = process.env.PORT || 5000;
+
+app.listen(port, () => {
+    console.log(`Server is up and running on port ${port}`);
+});
+
+app.use(passport.initialize());
+require('./config/passport')(passport);
+
+app.use('api/users', users);
 
 const router = express.Router();
 app.use('/todos', router);
@@ -84,7 +104,3 @@ router.route('/delete/:id').post(function(req, res) {
             });
     });
 });
-
-app.listen(PORT, () => {
-  console.log('Server is running on: ', PORT);
-})
