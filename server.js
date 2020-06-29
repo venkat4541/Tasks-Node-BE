@@ -9,6 +9,7 @@ const cors = require('cors');
 app.use(cors());
 
 const users = require('./routes/api/users');
+const todos = require('./routes/api/todos');
 let Todo = require('./models/Todo');
 
 app.use(
@@ -17,6 +18,9 @@ app.use(
     })
 );
 app.use(bodyParser.json());
+
+app.use(passport.initialize());
+require('./config/passport')(passport);
 
 // DB config
 const db = require('./config/keys').mongoURI;
@@ -36,71 +40,6 @@ app.listen(port, () => {
     console.log(`Server is up and running on port ${port}`);
 });
 
-app.use(passport.initialize());
-require('./config/passport')(passport);
-
-app.use('api/users', users);
-
-const router = express.Router();
-app.use('/todos', router);
-router.route('/').get((req, res) => {
-  Todo.find((err, todos) => {
-      if (err) {
-          console.log(err);
-      } else {
-          res.json(todos);
-      }
-  });
-});
-
-router.route('/:id').get(function(req, res) {
-  let id = req.params.id;
-  Todo.findById(id, function(err, todo) {
-      res.json(todo);
-  });
-});
-
-router.route('/add').post(function(req, res) {
-  let todo = new Todo(req.body);
-  todo.save()
-      .then(todo => {
-          res.status(200).json({'todo': 'todo added successfully'});
-      })
-      .catch(err => {
-          res.status(400).send('adding new todo failed');
-      });
-});
-
-
-router.route('/update/:id').post(function(req, res) {
-  Todo.findById(req.params.id, function(err, todo) {
-      if (!todo)
-          res.status(404).send("Data not found");
-      else
-          todo.title = req.body.title;
-          todo.user = req.body.user;
-          todo.priority = req.body.priority;
-          todo.completed = req.body.completed;
-
-          todo.save().then(todo => {
-              res.json('Todo updated!');
-          })
-          .catch(err => {
-              res.status(400).send("Update not possible");
-          });
-  });
-});
-
-router.route('/delete/:id').post(function(req, res) {
-    Todo.findById(req.params.id, function(err, todo) {
-        if (!todo)
-            res.status(404).send("Data not found");
-        else
-            Todo.deleteOne({"_id":req.params.id}).then(todo => {
-                res.json('Todo deleted!');
-            })
-            .catch(err => {
-                res.status(400).send("Data deletion failed");
-            });
-    });
-});
+// API routes
+app.use('/api/users', users);
+app.use('/api/todos', todos);
